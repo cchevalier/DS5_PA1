@@ -32,10 +32,12 @@ summary(activity)
 
 ```r
 # Calculate number of steps per day using tapply and removing NA's
-TotalStepsPerDay = tapply(activity$steps, activity$date, sum, na.rm = TRUE)
+TotalStepsPerDay <- tapply(activity$steps, activity$date, sum, na.rm = TRUE)
 
 # Plot resulting histogram
-hist(TotalStepsPerDay, col = "red", breaks = 10)
+hist(TotalStepsPerDay, col = "red", breaks = 25,
+     xlab = "Total steps per day",
+     xlim = c(0, 25000))
 ```
 
 ![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png) 
@@ -64,7 +66,7 @@ median(TotalStepsPerDay)
 
 ```r
 # Calculate average number of steps per interval using tapply and removing NA's
-AverageStepsPerInterval = tapply(activity$steps, activity$interval, mean, na.rm = TRUE)
+AverageStepsPerInterval <- tapply(activity$steps, activity$interval, mean, na.rm = TRUE)
 
 # Plot resulting Time Series plot
 plot(names(AverageStepsPerInterval), AverageStepsPerInterval, 
@@ -118,8 +120,9 @@ nb_na
 ```
 ## [1] 2304
 ```
-  
-The number of missing values is: 2304
+The number of missing values is: 2304  
+
+We create a new dataset which will contain the same data than activity but with the missing data filled in
    
    
 
