@@ -106,7 +106,7 @@ interval_max
 ## 206.1698
 ```
 
-The 5-minute interval, on average across all the days in the dataset, which contains the maximum number of steps is: 835
+The 5-minute interval, on average across all the days in the dataset, which contains the maximum number of steps is: 835. The max value is 206.1698113 
   
   
 ## Imputing missing values
