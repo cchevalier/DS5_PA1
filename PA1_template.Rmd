@@ -5,6 +5,9 @@ output:
     keep_md: true
 ---
 
+Reproducible Research Peer Assessment Assignment 1
+==================================================
+
 
 ## Loading and preprocessing the data
 ```{r loaddata}
@@ -17,9 +20,14 @@ summary(activity)
 
 
 ## What is mean total number of steps taken per day?
+We sum all steps per day (irrespective of the interval)
 ``` {r}
-# Calculate number of steps per day using tapply and removing NA's
+# Calculate number of steps per day using tapply (removing any NA's)
 TotalStepsPerDay <- tapply(activity$steps, activity$date, sum, na.rm = TRUE)
+
+# Get number of uniqye days (useful later) 
+nb_days <- length(TotalStepsPerDay)
+nb_days
 
 # Plot resulting histogram
 hist(TotalStepsPerDay, col = "red", breaks = 25,
@@ -27,15 +35,15 @@ hist(TotalStepsPerDay, col = "red", breaks = 25,
      xlim = c(0, 25000))
 ```
 
-
 We compute the mean and median values
 ``` {r}
 mean(TotalStepsPerDay)
 median(TotalStepsPerDay)
 ```
+
   
 ## What is the average daily activity pattern?
-  
+We average the steps per interval (irrespective of the day)
 ``` {r}
 # Calculate average number of steps per interval using tapply and removing NA's
 AverageStepsPerInterval <- tapply(activity$steps, activity$interval, mean, na.rm = TRUE)
@@ -74,13 +82,95 @@ nb_na
 ```
 The number of missing values is: `r nb_na`  
 
-We create a new dataset which will contain the same data than activity but with the missing data filled in
-   
+We create a new column to activity called steps\_new which will contain the same stesp data but with the missing data filled in. The missing values will be replaced by the AverageStepsPerInterval for that interval. In order to facilitate the replacement process we also create a new column average\_per\_interval which is the vector AverageStepsPerInterval repeated `r nb_days` times (see nb_days variable).
+
+``` {r} 
+activity$steps_new <- activity$steps
+activity$average_per_interval <- rep(AverageStepsPerInterval, nb_days)
+```
+
+We then loop other each step value and replace any NA by the corresponding average value for that interval
+
+``` {r}
+for (i in (1:length(activity$steps))) {
+  if (is.na(activity$steps[i])) {
+    activity$steps_new[i] <- activity$average_per_interval[i]
+  }
+}
+```
+
+We can then plot the correponding histogram:
+``` {r}
+TotalStepsPerDay_new <- tapply(activity$steps, activity$date, sum, na.rm = TRUE)
+
+# Plot resulting histogram
+hist(TotalStepsPerDay_new, col = "pink", breaks = 25,
+     main = "Histogram of Total steps per day (with NA's values replaced)",
+     xlab = "Total steps per day (with NA's values replaced)",
+     xlim = c(0, 25000))
+```
+
+We compute the mean and median values
+``` {r}
+mean(TotalStepsPerDay_new)
+median(TotalStepsPerDay_new)
+```
+
+
+Comparing with the first histogram we see no clear difference which seems normal. We have just replaced the NA's values by average values observed other days and therefore reinforced the average behavior. It's probably better actually in such case to ignore the NA's values and therefore to avoid the imputing process.
    
 
 ## Are there differences in activity patterns between weekdays and weekends?
+We create new columns to store the day corresponding to the date (using weekdays()) and if that day is in the weekend (default is FALSE)
+``` {r}
+activity$day <- weekdays(as.Date(activity$date))
+activity$weekend <- rep(FALSE, length(activity$date))
 
-``` {r} 
+# for each row, we then check if day is a weekend day and modify the flag accordingly.
+for (i in (1:length(activity$date))) {
+  if ((activity$day[i] == "Saturday") | (activity$day[i] == "Sunday")) {
+    activity$weekend[i] <- TRUE
+  } 
+}
 
 ```
 
+We split the activity in two new datasets based on the weekend boolean and we compute the average steps for each interval for each of these new datasets:
+``` {r}
+activity_weekend <- activity[activity$weekend == TRUE, ]
+AverageStepsPerInterval_weekend <- tapply(activity_weekend$steps_new, 
+                                          activity_weekend$interval, mean, 
+                                          na.rm = TRUE)
+
+
+activity_week <- activity[activity$weekend == FALSE, ]
+AverageStepsPerInterval_week <- tapply(activity_week$steps_new, 
+                                       activity_week$interval, mean, 
+                                       na.rm = TRUE)
+```
+
+Now we can plot the average pattern during the week (business days) and during the week-end:
+``` {r}
+par(mfcol = c(2, 1))
+
+# Plot resulting Time Series plot for the week
+plot(names(AverageStepsPerInterval_week), AverageStepsPerInterval_week, 
+     type = "l", 
+     col = "blue", 
+     ylim = c(0, 250),
+     main = "Average business week pattern", 
+     xlab = "5-minute interval (time)", 
+     ylab = "Average number of steps")
+
+# Plot resulting Time Series plot for the week-end
+plot(names(AverageStepsPerInterval_weekend), AverageStepsPerInterval_weekend, 
+     type = "l", 
+     col = "red", 
+     ylim = c(0, 250),
+     main = "Average week-end pattern", 
+     xlab = "5-minute interval (time)", 
+     ylab = "Average number of steps")
+```
+  
+We can clearly see differences between two datasets: Early activity during the week with peak around 8-9h (going to work) and then less activity (few peaks probably corresponding to lunch hours and end of works hours).
+During the weekend the activity is more spread during the days (no office hours for most of people)
